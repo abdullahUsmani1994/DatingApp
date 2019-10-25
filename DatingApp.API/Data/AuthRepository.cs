@@ -40,7 +40,8 @@ namespace DatingApp.API.Data
             }
             return true;
         }
-
+         // async make u wait untill the previous task is completed and sometimes async wait for the responce
+        //The task can tell us the work is completed and if the operation returns a result, the task gives us the result.
         public async Task<UserModel> Register(UserModel user, string password)
         {
             byte[] passwordHash, passwordSalt;
