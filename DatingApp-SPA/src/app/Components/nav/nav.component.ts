@@ -17,12 +17,12 @@ export class NavComponent implements OnInit {
   ngOnInit() {
   }
 
-  login() {
+  login(loginForm) {
     this.authService.login(this.model).subscribe(next => {
       this.alertify.success("Login successfully");
+      loginForm.reset();
     }, error => {
       this.alertify.error(error);
-      debugger
     }, () => {
       this.router.navigate(['/member']);
     });
@@ -33,7 +33,7 @@ export class NavComponent implements OnInit {
   }
   logout() {
     localStorage.removeItem("token");
-    this.alertify.message("logout");
+    this.alertify.warning("logout");
     this.router.navigate(['/home']);
   }
 }
