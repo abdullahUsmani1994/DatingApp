@@ -1,5 +1,6 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+//using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -68,7 +69,7 @@ namespace DatingApp.API.Controllers
 
             var tokenDescriptor = new SecurityTokenDescriptor{
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddMinutes(2),
+                Expires = DateTime.Now.AddMinutes(15),
                 SigningCredentials = creds
             };
             var tokenHandler = new JwtSecurityTokenHandler();

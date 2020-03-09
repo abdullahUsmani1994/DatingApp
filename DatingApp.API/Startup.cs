@@ -20,6 +20,8 @@ using System.Net;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using DatingApp.API.Helper;
+using Microsoft.Extensions.Hosting;
+using AutoMapper;
 
 namespace DatingApp.API
 {
@@ -35,12 +37,22 @@ namespace DatingApp.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));  
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            // services.AddControllers().AddNewtonsoftJson(OperatingSystem =>
+            // {
+            //     OperatingSystem.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            // });
+            services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddControllers().AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore); ;
+            // services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            // services.AddControllers().AddNewtonsoftJson();
             services.AddCors();
-            services.AddScoped<IAuthRepository,AuthRepository>(); // It means the service is created once per request within the scope and its equivalent to a sigleton. for example it creates one instence for each http request but it uses the same instence
+            services.AddAutoMapper(typeof(DatingRepository).Assembly);
+            services.AddTransient<Seed>();
+            services.AddScoped<IAuthRepository, AuthRepository>(); // It means the service is created once per request within the scope and its equivalent to a sigleton. for example it creates one instence for each http request but it uses the same instence
+            services.AddScoped<IDatingRepository, DatingRepository>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options => {
+            .AddJwtBearer(options =>
+            {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -53,7 +65,7 @@ namespace DatingApp.API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -61,23 +73,37 @@ namespace DatingApp.API
             }
             else
             {
-                app.UseExceptionHandler(builder => {
-                    builder.Run(async context => {
+                app.UseExceptionHandler(builder =>
+                {
+                    builder.Run(async context =>
+                    {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                         var error = context.Features.Get<IExceptionHandlerFeature>();
-                        if (error !=null){
+                        if (error != null)
+                        {
                             context.Response.AddApplicationError(error.Error.Message);
                             await context.Response.WriteAsync(error.Error.Message);
                         }
                     });
                 });
-               // app.UseHsts();
+                // app.UseHsts();
             }
 
-           // app.UseHttpsRedirection();
-           app.UseCors(x =>x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-           app.UseAuthentication();
-           app.UseMvc();
+            // app.UseHttpsRedirection();
+            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            app.UseRouting();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            // app.UseDefaultFiles();
+            // app.UseStaticFiles();
+
+
+            app.UseEndpoints(endpints =>
+            {
+                endpints.MapControllers();
+            });
         }
     }
 }
